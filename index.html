@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impler</title>
+
+    <script type="text/javascript" src="https://embed.impler.io/embed.umd.min.js"  ></script>
+</head>
+<body>
+<!-- <button disabled={!isImplerInitiated} onClick={showWidget}>
+    Import
+</button> -->
+
+
+    <script>
+        //
+        var accessToken ,templateId ,projectId;
+        accessToken = '75efe3c2889144b32c53ee5732d339d4';
+        templateId = '655f02138ae79271ab9f1f0e';
+        projectId = '655f00f88ae79271ab9f1dc4';
+        
+        window.impler.init(projectId, { accessToken });
+
+        window.impler.show({ templateId });
+
+        window.impler.on('message', { type: string, value: any });
+
+        window.impler.on('message', function (event) {
+        // Handle messages from the widget
+        console.log('Message received:', event);
+        });
+    </script>
+</body>
+</html>
