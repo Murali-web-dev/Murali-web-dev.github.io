@@ -1,1 +1,273 @@
-test
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do App</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f3f5f8;
+      color: #1a1a1a;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(520px, 95vw);
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(31, 43, 73, 0.12);
+      padding: 32px;
+      display: grid;
+      gap: 24px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.9rem;
+    }
+
+    p {
+      margin: 0;
+      color: #5a6579;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #d7dce6;
+      font-size: 1rem;
+    }
+
+    button {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      background: #3454f5;
+      color: white;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(52, 84, 245, 0.25);
+    }
+
+    .secondary {
+      background: #e8ecff;
+      color: #3454f5;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: #f8f9fb;
+      border: 1px solid #edf0f6;
+      gap: 12px;
+    }
+
+    .task {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .task input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #3454f5;
+    }
+
+    .task span.completed {
+      text-decoration: line-through;
+      color: #93a1b7;
+    }
+
+    .notification {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: #1f2d4d;
+      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 12px;
+      box-shadow: 0 14px 30px rgba(31, 45, 77, 0.25);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+      font-size: 0.95rem;
+    }
+
+    .notification.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #7b879b;
+      padding: 18px;
+      border: 1px dashed #c7ceda;
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Daily To-Do</h1>
+      <p>Add tasks, mark them done, and stay on track.</p>
+    </header>
+
+    <form id="todo-form">
+      <div class="input-row">
+        <input id="todo-input" type="text" placeholder="e.g. Draft project update" required />
+        <button type="submit">Add Task</button>
+      </div>
+      <button id="clear-completed" type="button" class="secondary">Clear Completed</button>
+    </form>
+
+    <section>
+      <ul id="todo-list"></ul>
+      <div id="empty-state" class="empty-state">No tasks yet. Add your first task above.</div>
+    </section>
+  </main>
+
+  <div id="notification" class="notification" role="status" aria-live="polite"></div>
+
+  <script>
+    const form = document.getElementById("todo-form");
+    const input = document.getElementById("todo-input");
+    const list = document.getElementById("todo-list");
+    const emptyState = document.getElementById("empty-state");
+    const clearButton = document.getElementById("clear-completed");
+    const notification = document.getElementById("notification");
+    let notificationTimeout;
+
+    const tasks = [
+      { text: "Review design mockups", completed: false },
+      { text: "Send weekly status", completed: true }
+    ];
+
+    const renderTasks = () => {
+      list.innerHTML = "";
+      tasks.forEach((task, index) => {
+        const listItem = document.createElement("li");
+        const taskWrapper = document.createElement("div");
+        taskWrapper.className = "task";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.completed;
+        checkbox.addEventListener("change", () => {
+          task.completed = checkbox.checked;
+          taskText.classList.toggle("completed", task.completed);
+          showNotification(task.completed ? "Task completed!" : "Task marked active");
+        });
+
+        const taskText = document.createElement("span");
+        taskText.textContent = task.text;
+        if (task.completed) {
+          taskText.classList.add("completed");
+        }
+
+        taskWrapper.append(checkbox, taskText);
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.className = "secondary";
+        deleteButton.textContent = "Remove";
+        deleteButton.addEventListener("click", () => {
+          tasks.splice(index, 1);
+          renderTasks();
+          showNotification("Task removed");
+        });
+
+        listItem.append(taskWrapper, deleteButton);
+        list.appendChild(listItem);
+      });
+
+      emptyState.style.display = tasks.length ? "none" : "block";
+    };
+
+    const showNotification = (message) => {
+      notification.textContent = message;
+      notification.classList.add("show");
+      clearTimeout(notificationTimeout);
+      notificationTimeout = setTimeout(() => {
+        notification.classList.remove("show");
+      }, 2000);
+    };
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) {
+        showNotification("Please add a task name");
+        return;
+      }
+      tasks.unshift({ text, completed: false });
+      input.value = "";
+      renderTasks();
+      showNotification("Task added");
+    });
+
+    clearButton.addEventListener("click", () => {
+      const activeTasks = tasks.filter((task) => !task.completed);
+      if (activeTasks.length === tasks.length) {
+        showNotification("No completed tasks to clear");
+        return;
+      }
+      tasks.length = 0;
+      tasks.push(...activeTasks);
+      renderTasks();
+      showNotification("Completed tasks cleared");
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>
